@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, os::unix::fs::MetadataExt};
 
 #[derive(Debug, Clone)]
 pub struct File {
@@ -44,8 +44,11 @@ pub fn collect_data(path: impl Into<std::path::PathBuf>) -> anyhow::Result<Folde
         let file_name = file.file_name().to_string_lossy().to_string();
 
         if metadata.is_dir() {
-            folder_info.sub_folders.insert(file_name.clone(), collect_data(file.path())?);
+            let sub_folders = collect_data(file.path())?;
+            folder_info.size += sub_folders.size;
+            folder_info.sub_folders.insert(file_name.clone(), sub_folders);
         } else {
+            folder_info.size += metadata.len();
             folder_info.files.insert(file_name.clone(), File::new(file_name, metadata.len()));
         }
     }
