@@ -6,6 +6,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::io;
 
+
 #[tokio::main]
 async fn main() -> AppResult<()> {
     // Create an application.
