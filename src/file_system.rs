@@ -1,4 +1,4 @@
-use std::{collections::HashMap, os::unix::fs::MetadataExt};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct File {
