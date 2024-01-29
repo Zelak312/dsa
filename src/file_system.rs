@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 
 #[derive(Debug, Clone)]
 pub struct File {
@@ -43,13 +43,32 @@ pub fn collect_data(path: impl Into<std::path::PathBuf>) -> anyhow::Result<Folde
         let metadata = file.metadata()?;
         let file_name = file.file_name().to_string_lossy().to_string();
 
+        /*
+            Use Entry API for HashMap:
+            This avoids duplicate key lookups in the HashMaps.
+            I can also improve performance when inserting or updating entries in the files and sub_folders HashMaps.
+        */
         if metadata.is_dir() {
             let sub_folders = collect_data(file.path())?;
             folder_info.size += sub_folders.size;
-            folder_info.sub_folders.insert(file_name.clone(), sub_folders);
+            match folder_info.sub_folders.entry(file_name) {
+                Entry::Occupied(mut entry) => {
+                    entry.get_mut().size += sub_folders.size;
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(sub_folders);
+                }
+            }
         } else {
             folder_info.size += metadata.len();
-            folder_info.files.insert(file_name.clone(), File::new(file_name, metadata.len()));
+            match folder_info.files.entry(file_name.clone()) {
+                Entry::Occupied(_) => {
+                    continue;
+                },
+                Entry::Vacant(entry) => {
+                    entry.insert(File::new(file_name, metadata.len()));
+                }
+            }
         }
     }
 
